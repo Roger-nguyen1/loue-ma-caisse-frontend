@@ -112,7 +112,7 @@ export default function MyVehiclesPage() {
                     <p className="font-bold text-primary">
                       {vehicle.pricePerDay}€ / jour
                     </p>
-                  </div>
+                  </div>{" "}
                   <div className="mt-2 flex justify-between items-center">
                     <span
                       className={`px-2 py-1 rounded-full text-sm ${
@@ -126,6 +126,45 @@ export default function MyVehiclesPage() {
                   </div>
                 </div>
               </Link>
+              <div className="p-4 border-t flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push(`/vehicles/${vehicle.id}/edit`);
+                  }}
+                >
+                  Modifier
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    if (
+                      confirm(
+                        "Êtes-vous sûr de vouloir supprimer ce véhicule ?"
+                      )
+                    ) {
+                      try {
+                        await apiService.vehicles.delete(vehicle.id);
+                        setVehicles(
+                          vehicles.filter((v) => v.id !== vehicle.id)
+                        );
+                        toast.success("Véhicule supprimé avec succès");
+                      } catch (error) {
+                        console.error("Erreur lors de la suppression:", error);
+                        toast.error(
+                          "Erreur lors de la suppression du véhicule"
+                        );
+                      }
+                    }
+                  }}
+                >
+                  Supprimer
+                </Button>
+              </div>
             </motion.div>
           ))}
         </div>
