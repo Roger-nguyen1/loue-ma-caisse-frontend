@@ -44,7 +44,7 @@ export default function RegisterPage() {
             Ou{" "}
             <Link
               href="/login"
-              className="font-medium text-primary-600 hover:text-primary-500"
+              className="font-medium text-primary-600 hover:text-primary-500 hover:underline"
             >
               connectez-vous à votre compte
             </Link>

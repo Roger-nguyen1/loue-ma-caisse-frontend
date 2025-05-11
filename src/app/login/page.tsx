@@ -41,7 +41,7 @@ export default function LoginPage() {
             Ou{" "}
             <Link
               href="/register"
-              className="font-medium text-primary-600 hover:text-primary-500"
+              className="font-medium text-primary-600 hover:text-primary-500 hover:underline"
             >
               créez un compte gratuitement
             </Link>
