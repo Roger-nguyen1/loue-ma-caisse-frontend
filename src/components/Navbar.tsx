@@ -14,11 +14,15 @@ export default function Navbar() {
   if (isLoading) {
     return null;
   }
-
   const navigation = [
     { name: "Accueil", href: "/" },
     { name: "Véhicules", href: "/vehicles" },
-    ...(user ? [{ name: "Mes Réservations", href: "/bookings" }] : []),
+    ...(user
+      ? [
+          { name: "Mes Réservations", href: "/bookings" },
+          { name: "Mes Véhicules", href: "/my-vehicles" },
+        ]
+      : []),
   ];
 
   return (

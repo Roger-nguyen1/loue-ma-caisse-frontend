@@ -38,21 +38,22 @@ export const apiService = {
       return response.data;
     },
   },
-
   // Vehicles
   vehicles: {
     async getAll(): Promise<Vehicle[]> {
-      const response = await api.get<Vehicle[]>("/vehicles");
+      const response = await api.get<Vehicle[]>("/Vehicles");
       return response.data;
     },
-
     async getById(id: string): Promise<Vehicle> {
-      const response = await api.get<Vehicle>(`/vehicles/${id}`);
+      const response = await api.get<Vehicle>(`/Vehicles/${id}`);
       return response.data;
     },
-
+    async getMyVehicles(): Promise<Vehicle[]> {
+      const response = await api.get<Vehicle[]>("/Vehicles/me");
+      return response.data;
+    },
     async create(data: Partial<Vehicle>): Promise<Vehicle> {
-      const response = await api.post<Vehicle>("/vehicles", data);
+      const response = await api.post<Vehicle>("/Vehicles", data);
       return response.data;
     },
   },
