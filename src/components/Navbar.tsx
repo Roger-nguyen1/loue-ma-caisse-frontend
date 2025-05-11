@@ -46,17 +46,21 @@ export default function Navbar() {
                     </Link>
                   ))}
                 </div>
-              </div>
+              </div>{" "}
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
                 {user ? (
                   <Menu as="div" className="ml-3 relative">
                     <Menu.Button className="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                      <span className="sr-only">Open user menu</span>
-                      <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                        <span className="text-primary-700 font-medium">
-                          {user.firstName[0]}
-                          {user.lastName[0]}
-                        </span>
+                      <span className="sr-only">
+                        Ouvrir le menu utilisateur
+                      </span>
+                      <div className="relative h-8 w-8 rounded-full overflow-hidden">
+                        <div className="absolute inset-0 bg-primary-100 flex items-center justify-center">
+                          <span className="text-primary-700 font-medium">
+                            {user.firstName[0]}
+                            {user.lastName[0]}
+                          </span>
+                        </div>
                       </div>
                     </Menu.Button>
                     <Transition
@@ -68,14 +72,33 @@ export default function Navbar() {
                       leaveFrom="transform opacity-100 scale-100"
                       leaveTo="transform opacity-0 scale-95"
                     >
+                      {" "}
                       <Menu.Items className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <p className="text-sm font-medium text-gray-900">
+                            {user.firstName} {user.lastName}
+                          </p>
+                          <p className="text-sm text-gray-500">{user.email}</p>
+                        </div>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <Link
+                              href="/bookings"
+                              className={`${
+                                active ? "bg-gray-100" : ""
+                              } block px-4 py-2 text-sm text-gray-700`}
+                            >
+                              Mes réservations
+                            </Link>
+                          )}
+                        </Menu.Item>
                         <Menu.Item>
                           {({ active }) => (
                             <button
                               onClick={logout}
                               className={`${
                                 active ? "bg-gray-100" : ""
-                              } block w-full text-left px-4 py-2 text-sm text-gray-700`}
+                              } block w-full text-left px-4 py-2 text-sm text-gray-700 border-t border-gray-100`}
                             >
                               Se déconnecter
                             </button>
@@ -88,13 +111,13 @@ export default function Navbar() {
                   <div className="flex items-center space-x-4">
                     <Link
                       href="/login"
-                      className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                      className="text-gray-600 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
                     >
                       Connexion
                     </Link>
                     <Link
                       href="/register"
-                      className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                      className="bg-primary-600 hover:bg-primary-700 text-gray-600 px-4 py-2 rounded-md text-sm font-medium"
                     >
                       Inscription
                     </Link>
