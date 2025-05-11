@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { Vehicle } from "@/types";
 import { apiService } from "@/services/api";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
-import { format } from "date-fns";
 import "react-datepicker/dist/react-datepicker.css";
 import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -16,11 +14,18 @@ import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { Loader2 } from "lucide-react";
 import DatePicker from "@/components/ui/custom/DatePicker";
 
-export default function VehicleDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+type PageParams = {
+  id: string;
+};
+
+interface PageProps {
+  params: Promise<PageParams>;
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default function VehicleDetailPage(props: PageProps) {
+  const { params: paramsPromise } = props;
+  const params = use(paramsPromise) as PageParams;
   const router = useRouter();
   const { user } = useAuth();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -216,7 +221,7 @@ export default function VehicleDetailPage({
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full hover:cursor-pointer"
                 disabled={!bookingDates.startDate || !bookingDates.endDate}
               >
                 Réserver maintenant
