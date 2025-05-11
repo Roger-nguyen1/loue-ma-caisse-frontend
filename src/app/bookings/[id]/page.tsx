@@ -1,18 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { Booking, Vehicle } from "@/types";
 import { apiService } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  CheckCircleIcon,
+  ArrowPathIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 
-export default function BookingConfirmationPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+type PageParams = {
+  id: string;
+};
+
+interface PageProps {
+  params: Promise<PageParams>;
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default function BookingConfirmationPage(props: PageProps) {
+  const { params: paramsPromise } = props;
+  const params = use(paramsPromise) as PageParams;
   const router = useRouter();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -40,6 +54,32 @@ export default function BookingConfirmationPage({
     fetchBookingAndVehicle();
   }, [params.id, router]);
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "Confirmed":
+        return <CheckCircleIcon className="h-6 w-6 text-green-500" />;
+      case "Pending":
+        return <ArrowPathIcon className="h-6 w-6 text-yellow-500" />;
+      case "Cancelled":
+        return <XCircleIcon className="h-6 w-6 text-red-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "Confirmed":
+        return "Confirmée";
+      case "Pending":
+        return "En attente";
+      case "Cancelled":
+        return "Annulée";
+      default:
+        return status;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -52,9 +92,6 @@ export default function BookingConfirmationPage({
     return null;
   }
 
-  const startDate = new Date(booking.startDate).toLocaleDateString("fr-FR");
-  const endDate = new Date(booking.endDate).toLocaleDateString("fr-FR");
-
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div
@@ -64,11 +101,24 @@ export default function BookingConfirmationPage({
         className="max-w-2xl mx-auto"
       >
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="bg-primary-600 text-white p-6">
-            <h1 className="text-2xl font-bold">Confirmation de réservation</h1>
-            <p className="text-primary-100">
-              Réservation #{booking.id.slice(-6)}
-            </p>
+          <div className="bg-primary-600 text-gray-600 p-6">
+            {" "}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                {getStatusIcon(booking.status)}
+                <span className="text-gray-600 font-medium">
+                  {getStatusText(booking.status)}
+                </span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">
+                  Détails de la réservation
+                </h1>
+                <p className="text-primary-100">
+                  Réservation #{booking.id.slice(-6)}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="p-6">
@@ -86,6 +136,7 @@ export default function BookingConfirmationPage({
                   {vehicle.brand} {vehicle.model}
                 </h2>
                 <p className="text-gray-600">Année : {vehicle.year}</p>
+                <p className="text-gray-600">{vehicle.city}</p>
               </div>
             </div>
 
@@ -97,31 +148,41 @@ export default function BookingConfirmationPage({
               <dl className="grid grid-cols-1 gap-4">
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Date de début :</dt>
-                  <dd className="font-medium">{startDate}</dd>
+                  <dd className="font-medium">
+                    {format(new Date(booking.startDate), "d MMMM yyyy", {
+                      locale: fr,
+                    })}
+                  </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Date de fin :</dt>
-                  <dd className="font-medium">{endDate}</dd>
+                  <dd className="font-medium">
+                    {format(new Date(booking.endDate), "d MMMM yyyy", {
+                      locale: fr,
+                    })}
+                  </dd>
                 </div>
-                <div className="flex justify-between border-t pt-4">
-                  <dt className="text-gray-900 font-semibold">Prix total :</dt>
-                  <dd className="text-primary-600 font-bold text-xl">
+                <div className="flex justify-between">
+                  <dt className="text-gray-600">Prix total :</dt>
+                  <dd className="font-bold text-primary-600">
                     {booking.totalPrice}€
                   </dd>
                 </div>
               </dl>
             </div>
 
-            <div className="mt-8 space-y-4">
-              <p className="text-gray-600 text-sm">
-                Un email de confirmation vous a été envoyé avec tous les détails
-                de votre réservation.
-              </p>
+            <div className="mt-8 flex justify-center gap-4">
               <button
                 onClick={() => router.push("/bookings")}
-                className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors"
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 hover:cursor-pointer rounded-md transition-colors"
               >
                 Voir mes réservations
+              </button>
+              <button
+                onClick={() => router.push("/vehicles")}
+                className="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-md transition-colors"
+              >
+                Chercher d'autres véhicules
               </button>
             </div>
           </div>

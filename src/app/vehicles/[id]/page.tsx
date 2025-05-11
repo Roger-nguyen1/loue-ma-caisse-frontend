@@ -8,6 +8,13 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
+import { format } from "date-fns";
+import "react-datepicker/dist/react-datepicker.css";
+import { fr } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { Loader2 } from "lucide-react";
+import DatePicker from "@/components/ui/custom/DatePicker";
 
 export default function VehicleDetailPage({
   params,
@@ -19,9 +26,10 @@ export default function VehicleDetailPage({
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [bookingDates, setBookingDates] = useState({
-    startDate: "",
-    endDate: "",
+    startDate: null as Date | null,
+    endDate: null as Date | null,
   });
+  const [totalPrice, setTotalPrice] = useState(0);
 
   useEffect(() => {
     const fetchVehicle = async () => {
@@ -39,6 +47,18 @@ export default function VehicleDetailPage({
 
     fetchVehicle();
   }, [params.id, router]);
+
+  useEffect(() => {
+    if (vehicle && bookingDates.startDate && bookingDates.endDate) {
+      const days = Math.ceil(
+        (bookingDates.endDate.getTime() - bookingDates.startDate.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+      setTotalPrice(days * vehicle.pricePerDay);
+    } else {
+      setTotalPrice(0);
+    }
+  }, [vehicle, bookingDates.startDate, bookingDates.endDate]);
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,8 +78,8 @@ export default function VehicleDetailPage({
     try {
       const booking = await apiService.bookings.create({
         vehicleId: params.id,
-        startDate,
-        endDate,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
       });
 
       toast.success("Réservation effectuée avec succès !");
@@ -71,8 +91,8 @@ export default function VehicleDetailPage({
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -83,105 +103,128 @@ export default function VehicleDetailPage({
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-4xl mx-auto"
-      >
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="relative h-96">
-            <Image
-              src={vehicle.imageUrl || "/images/default-car.jpg"}
-              alt={`${vehicle.brand} ${vehicle.model}`}
-              fill
-              className="object-cover"
-            />
-          </div>
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="flex items-center space-x-2"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          <span>Retour</span>
+        </Button>
+      </div>
 
-          <div className="p-6">
-            <h1 className="text-3xl font-bold mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Image du véhicule */}
+        <div className="relative h-[400px] rounded-lg overflow-hidden">
+          <Image
+            src={vehicle.imageUrl || "/images/default-car.jpg"}
+            alt={`${vehicle.brand} ${vehicle.model}`}
+            fill
+            className="object-cover"
+          />
+        </div>
+
+        {/* Informations et formulaire de réservation */}
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">
               {vehicle.brand} {vehicle.model}
             </h1>
+            <p className="text-xl font-semibold text-primary">
+              {vehicle.pricePerDay}€ / jour
+            </p>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Informations</h2>
-                <ul className="space-y-2">
-                  <li className="flex items-center">
-                    <span className="text-gray-600 w-24">Année :</span>
-                    <span className="font-medium">{vehicle.year}</span>
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-gray-600 w-24">Prix :</span>
-                    <span className="font-medium text-primary-600">
-                      {vehicle.pricePerDay}€ / jour
-                    </span>
-                  </li>
-                </ul>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Caractéristiques</h3>
+              <dl className="grid grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-gray-600">Année</dt>
+                  <dd>{vehicle.year}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-600">Transmission</dt>
+                  <dd>{vehicle.transmission}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-600">Carburant</dt>
+                  <dd>{vehicle.fuelType}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-600">Ville</dt>
+                  <dd>{vehicle.city}</dd>
+                </div>
+              </dl>
+            </div>
 
-                <div className="mt-6">
-                  <h3 className="font-semibold mb-2">Description</h3>
-                  <p className="text-gray-600">{vehicle.description}</p>
+            <form onSubmit={handleBooking} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Date de début
+                  </label>
+                  <DatePicker
+                    selected={bookingDates.startDate}
+                    onChange={(date) =>
+                      setBookingDates({
+                        ...bookingDates,
+                        startDate: date,
+                      })
+                    }
+                    minDate={new Date()}
+                    maxDate={bookingDates.endDate || undefined}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Sélectionner une date"
+                    locale={fr}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Date de fin
+                  </label>
+                  <DatePicker
+                    selected={bookingDates.endDate}
+                    onChange={(date) =>
+                      setBookingDates({
+                        ...bookingDates,
+                        endDate: date,
+                      })
+                    }
+                    minDate={bookingDates.startDate || new Date()}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Sélectionner une date"
+                    locale={fr}
+                    required
+                  />
                 </div>
               </div>
 
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Réservation</h2>
-                <form onSubmit={handleBooking} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Date de début
-                    </label>
-                    <input
-                      type="date"
-                      value={bookingDates.startDate}
-                      onChange={(e) =>
-                        setBookingDates({
-                          ...bookingDates,
-                          startDate: e.target.value,
-                        })
-                      }
-                      min={new Date().toISOString().split("T")[0]}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                      required
-                    />
+              {totalPrice > 0 && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="text-lg font-semibold mb-2">Récapitulatif</h4>
+                  <div className="flex justify-between items-center">
+                    <span>Prix total</span>
+                    <span className="text-xl font-bold text-primary">
+                      {totalPrice}€
+                    </span>
                   </div>
+                </div>
+              )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Date de fin
-                    </label>
-                    <input
-                      type="date"
-                      value={bookingDates.endDate}
-                      onChange={(e) =>
-                        setBookingDates({
-                          ...bookingDates,
-                          endDate: e.target.value,
-                        })
-                      }
-                      min={
-                        bookingDates.startDate ||
-                        new Date().toISOString().split("T")[0]
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                      required
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors"
-                  >
-                    Réserver maintenant
-                  </button>
-                </form>
-              </div>
-            </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={!bookingDates.startDate || !bookingDates.endDate}
+              >
+                Réserver maintenant
+              </Button>
+            </form>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
