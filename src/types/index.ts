@@ -35,8 +35,11 @@ export interface Booking {
 }
 
 export interface AuthResponse {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
   token: string;
-  user: User;
 }
 
 export interface LoginRequest {
@@ -49,4 +52,5 @@ export interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
+  phoneNumber: string;
 }

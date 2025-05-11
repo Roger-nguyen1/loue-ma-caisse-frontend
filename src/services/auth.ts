@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 export async function login(data: LoginRequest): Promise<AuthResponse | null> {
   try {
     const response = await apiService.auth.login(data);
+    // On reçoit directement les bonnes données du serveur maintenant
     toast.success("Connexion réussie !");
     return response;
   } catch (error) {

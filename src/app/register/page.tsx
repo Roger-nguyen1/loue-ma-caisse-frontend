@@ -15,6 +15,7 @@ export default function RegisterPage() {
     password: "",
     firstName: "",
     lastName: "",
+    phoneNumber: "",
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,7 +25,7 @@ export default function RegisterPage() {
     try {
       const response = await authService.register(formData);
       if (response) {
-        login(response.token, response.user);
+        login(response);
         router.push("/vehicles");
       }
     } finally {
@@ -86,6 +87,23 @@ export default function RegisterPage() {
               />
             </div>
             <div>
+              <label htmlFor="phoneNumber" className="sr-only">
+                Numéro de téléphone
+              </label>
+              <input
+                id="phoneNumber"
+                name="phoneNumber"
+                type="tel"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Numéro de téléphone"
+                value={formData.phoneNumber}
+                onChange={(e) =>
+                  setFormData({ ...formData, phoneNumber: e.target.value })
+                }
+              />
+            </div>
+            <div>
               <label htmlFor="email" className="sr-only">
                 Email
               </label>
@@ -127,7 +145,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-gray-600 bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-gray-600 bg-primary-600 hover:bg-primary-700 hover:cursor-pointer hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? "Création du compte..." : "S'inscrire"}
             </button>

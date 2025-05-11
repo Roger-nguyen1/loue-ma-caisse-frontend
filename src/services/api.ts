@@ -29,12 +29,12 @@ export const apiService = {
   // Auth
   auth: {
     async login(data: LoginRequest): Promise<AuthResponse> {
-      const response = await api.post<AuthResponse>("/auth/login", data);
+      const response = await api.post<AuthResponse>("/Auth/login", data);
       return response.data;
     },
 
     async register(data: RegisterRequest): Promise<AuthResponse> {
-      const response = await api.post<AuthResponse>("/auth/register", data);
+      const response = await api.post<AuthResponse>("/Auth/register", data);
       return response.data;
     },
   },

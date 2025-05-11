@@ -1,12 +1,12 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
-import { User, AuthResponse } from "@/types";
+import { User } from "@/types";
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (response: AuthResponse) => void;
+  login: (token: string, user: User) => void;
   logout: () => void;
   isLoading: boolean;
 }
@@ -23,7 +23,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
-  const [state, setState] = useState<{
+  const [authData, setAuthData] = useState<{
     user: User | null;
     token: string | null;
     isLoading: boolean;
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (storedToken && storedUser) {
         const parsedUser = JSON.parse(storedUser);
         if (parsedUser && typeof parsedUser === "object") {
-          setState({
+          setAuthData({
             user: parsedUser,
             token: storedToken,
             isLoading: false,
@@ -57,25 +57,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
       }
-      setState((prev) => ({ ...prev, isLoading: false }));
     } catch (error) {
       console.error("Erreur lors de l'initialisation:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      setState((prev) => ({ ...prev, isLoading: false }));
     }
+
+    setAuthData((prev) => ({ ...prev, isLoading: false }));
   }, [mounted]);
-  const login = (response: AuthResponse) => {
-    const user: User = {
-      id: response.id,
-      email: response.email,
-      firstName: response.firstName,
-      lastName: response.lastName,
-    };
-    localStorage.setItem("token", response.token);
+
+  const login = (newToken: string, user: User) => {
+    localStorage.setItem("token", newToken);
     localStorage.setItem("user", JSON.stringify(user));
-    setState({
-      token: response.token,
+    setAuthData({
+      token: newToken,
       user,
       isLoading: false,
     });
@@ -84,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setState({
+    setAuthData({
       token: null,
       user: null,
       isLoading: false,
@@ -98,11 +93,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user: state.user,
-        token: state.token,
+        user: authData.user,
+        token: authData.token,
         login,
         logout,
-        isLoading: state.isLoading,
+        isLoading: authData.isLoading,
       }}
     >
       {children}
