@@ -56,6 +56,15 @@ export const apiService = {
       const response = await api.post<Vehicle>("/Vehicles", data);
       return response.data;
     },
+
+    async update(id: string, data: Partial<Vehicle>): Promise<Vehicle> {
+      const response = await api.put<Vehicle>(`/Vehicles/${id}`, data);
+      return response.data;
+    },
+
+    async delete(id: string): Promise<void> {
+      await api.delete(`/Vehicles/${id}`);
+    },
   },
 
   // Bookings
