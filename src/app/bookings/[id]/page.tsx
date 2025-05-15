@@ -19,14 +19,29 @@ type PageParams = {
   id: string;
 };
 
+// Type pour les searchParams une fois résolus
+type ResolvedSearchParams = { [key: string]: string | string[] | undefined };
+
 interface PageProps {
   params: Promise<PageParams>;
-  searchParams: { [key: string]: string | string[] | undefined };
+  // Modifié pour correspondre au type attendu par Next.js selon l'erreur
+  searchParams: Promise<ResolvedSearchParams>;
 }
 
 export default function BookingConfirmationPage(props: PageProps) {
-  const { params: paramsPromise } = props;
-  const params = use(paramsPromise) as PageParams;
+  // Déstructurer paramsPromise et searchParamsPromise depuis props
+  const { params: paramsPromise, searchParams: searchParamsPromise } = props;
+
+  // Résoudre les promesses en utilisant le hook 'use'
+  // Si paramsPromise est de type Promise<PageParams>, 'params' sera de type PageParams
+  const params = use(paramsPromise);
+  // Si searchParamsPromise est de type Promise<ResolvedSearchParams>, 'searchParams' sera de type ResolvedSearchParams
+  // Même si searchParams n'est pas utilisé activement dans votre logique actuelle,
+  // il faut le résoudre pour satisfaire la signature de type et le hook 'use'.
+  const searchParams = use(searchParamsPromise);
+  // Si vous ne prévoyez pas d'utiliser searchParams, vous pouvez le nommer avec un underscore:
+  // const _searchParams = use(searchParamsPromise);
+
   const router = useRouter();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -34,14 +49,32 @@ export default function BookingConfirmationPage(props: PageProps) {
 
   useEffect(() => {
     const fetchBookingAndVehicle = async () => {
+      // 'params.id' est disponible ici car 'params' est la valeur résolue de la promesse
+      if (!params || !params.id) {
+        console.error("ID de réservation manquant dans les paramètres.");
+        toast.error("ID de réservation manquant.");
+        router.push("/bookings");
+        setIsLoading(false); // Assurez-vous de gérer l'état de chargement
+        return;
+      }
       try {
         const bookingData = await apiService.bookings.getById(params.id);
         setBooking(bookingData);
 
-        const vehicleData = await apiService.vehicles.getById(
-          bookingData.vehicleId
-        );
-        setVehicle(vehicleData);
+        if (bookingData && bookingData.vehicleId) {
+          const vehicleData = await apiService.vehicles.getById(
+            bookingData.vehicleId
+          );
+          setVehicle(vehicleData);
+        } else {
+          // Gérer le cas où bookingData est null ou vehicleId est manquant
+          console.error(
+            "Données de réservation incomplètes ou vehicleId manquant après récupération."
+          );
+          toast.error("Détails de la réservation incomplets.");
+          // Vous pourriez vouloir rediriger ou afficher un message d'erreur plus spécifique ici
+          // Pour l'instant, on arrête le chargement et on ne définit pas de véhicule
+        }
       } catch (error) {
         console.error("Erreur lors du chargement de la réservation:", error);
         toast.error("Impossible de charger les détails de la réservation");
@@ -51,8 +84,11 @@ export default function BookingConfirmationPage(props: PageProps) {
       }
     };
 
+    // 'params' est résolu avant que useEffect ne s'exécute grâce au hook 'use'
+    // donc nous pouvons l'utiliser directement comme dépendance.
     fetchBookingAndVehicle();
-  }, [params.id, router]);
+  }, [params, router]); // Utiliser params (l'objet résolu) comme dépendance.
+  // Si seul params.id est utilisé, [params.id, router] est aussi correct et plus précis.
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -88,8 +124,25 @@ export default function BookingConfirmationPage(props: PageProps) {
     );
   }
 
+  // Si le chargement est terminé mais que la réservation ou le véhicule n'a pas pu être chargé
   if (!booking || !vehicle) {
-    return null;
+    // Vous pourriez vouloir afficher un message d'erreur plus informatif ici
+    // au lieu de simplement retourner null, qui ne rendra rien.
+    // Par exemple, si la redirection a déjà eu lieu dans useEffect, ce return pourrait ne pas être atteint.
+    // Si la redirection n'a pas eu lieu mais les données sont manquantes, affichez un message.
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <p className="text-red-500">
+          Impossible d'afficher les détails de la réservation.
+        </p>
+        <button
+          onClick={() => router.push("/bookings")}
+          className="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 hover:cursor-pointer rounded-md transition-colors"
+        >
+          Retourner à mes réservations
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -101,12 +154,17 @@ export default function BookingConfirmationPage(props: PageProps) {
         className="max-w-2xl mx-auto"
       >
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="bg-primary-600 text-gray-600 p-6">
+          <div className="bg-primary-600 text-white p-6">
             {" "}
-            <div className="flex items-center gap-2">
+            {/* Changé text-gray-600 en text-white pour un meilleur contraste sur fond primary-600 */}
+            <div className="flex items-center gap-4">
+              {" "}
+              {/* Augmenté le gap pour une meilleure séparation */}
               <div className="flex items-center gap-2">
                 {getStatusIcon(booking.status)}
-                <span className="text-gray-600 font-medium">
+                <span className="font-medium">
+                  {" "}
+                  {/* Enlevé text-gray-600, héritera de text-white */}
                   {getStatusText(booking.status)}
                 </span>
               </div>
@@ -115,6 +173,8 @@ export default function BookingConfirmationPage(props: PageProps) {
                   Détails de la réservation
                 </h1>
                 <p className="text-primary-100">
+                  {" "}
+                  {/* text-primary-100 est ok si c'est une nuance claire de la couleur primaire */}
                   Réservation #{booking.id.slice(-6)}
                 </p>
               </div>
@@ -128,6 +188,7 @@ export default function BookingConfirmationPage(props: PageProps) {
                   src={vehicle.imageUrl || "/images/default-car.jpg"}
                   alt={`${vehicle.brand} ${vehicle.model}`}
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Ajout de l'attribut sizes pour l'optimisation de l'image
                   className="object-cover rounded-lg"
                 />
               </div>
@@ -142,10 +203,13 @@ export default function BookingConfirmationPage(props: PageProps) {
 
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-semibold mb-4">
-                Détails de la réservation
+                Informations de la réservation{" "}
+                {/* Changé "Détails" en "Informations" pour varier */}
               </h3>
 
-              <dl className="grid grid-cols-1 gap-4">
+              <dl className="grid grid-cols-1 gap-y-4">
+                {" "}
+                {/* Changé gap-4 en gap-y-4 pour espacement vertical uniquement */}
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Date de début :</dt>
                   <dd className="font-medium">
@@ -171,16 +235,18 @@ export default function BookingConfirmationPage(props: PageProps) {
               </dl>
             </div>
 
-            <div className="mt-8 flex justify-center gap-4">
+            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+              {" "}
+              {/* Responsive flex direction */}
               <button
                 onClick={() => router.push("/bookings")}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 hover:cursor-pointer rounded-md transition-colors"
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 hover:cursor-pointer rounded-md transition-colors w-full sm:w-auto"
               >
                 Voir mes réservations
               </button>
               <button
                 onClick={() => router.push("/vehicles")}
-                className="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-md transition-colors"
+                className="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-md transition-colors w-full sm:w-auto"
               >
                 Chercher d'autres véhicules
               </button>

@@ -6,6 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 registerLocale("fr", fr);
 
 interface DatePickerProps {
+  id?: string;
   selected: Date | null;
   onChange: (date: Date | null) => void;
   minDate?: Date;
@@ -14,6 +15,7 @@ interface DatePickerProps {
   dateFormat?: string;
   locale?: Locale;
   required?: boolean;
+  className?: string;
 }
 
 const DatePicker = ({
