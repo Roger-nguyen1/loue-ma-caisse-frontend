@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, ChangeEvent } from "react";
+import { useState, useMemo, useEffect, ChangeEvent } from "react";
 import { Vehicle } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,7 +78,7 @@ export function VehiclesFilter({ vehicles, onFilter }: VehiclesFilterProps) {
   }, [currentFilters, vehicles]);
 
   // Appeler onFilter quand les résultats filtrés changent
-  useMemo(() => {
+  useEffect(() => {
     onFilter(filteredVehicles);
   }, [filteredVehicles, onFilter]);
 
